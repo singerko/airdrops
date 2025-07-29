@@ -1,0 +1,28 @@
+{
+  "name": "airdrop-portal",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Cryptocurrency Airdrop Management Portal",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "hot": "vite --host"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.3",
+    "@tailwindcss/typography": "^0.5.9",
+    "alpinejs": "^3.12.0",
+    "autoprefixer": "^10.4.14",
+    "axios": "^1.4.0",
+    "laravel-vite-plugin": "^0.7.5",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.2",
+    "vite": "^4.3.9"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.78.0",
+    "@cosmjs/stargate": "^0.32.0",
+    "ethers": "^6.6.0"
+  }
+}
