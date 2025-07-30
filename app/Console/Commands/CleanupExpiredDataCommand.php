@@ -1,5 +1,5 @@
 <?php
-// app/Console/Commands/CleanupExpiredData.php (upravený bez Redis)
+// app/Console/Commands/CleanupExpiredDataCommand.php (upravený bez Redis)
 
 namespace App\Console\Commands;
 

@@ -127,3 +127,14 @@ Route::prefix('api/v1')->middleware('throttle:60,1')->group(function () {
     Route::get('projects/search', [App\Http\Controllers\Api\ProjectController::class, 'search']);
     Route::get('blockchains', [App\Http\Controllers\Api\BlockchainController::class, 'index']);
 });
+
+// Pre skupinu routes ktoré vyžadujú prihlásenie
+Route::middleware(['auth', 'force.password.change'])->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index']);
+    // ďalšie chránené routes...
+});
+
+// Admin routes
+Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->group(function () {
+    // admin routes...
+});

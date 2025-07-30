@@ -6,7 +6,7 @@
 
 # Variables
 COMPOSE_CMD = podman-compose
-COMPOSE_FILE = -f docker-compose.yml
+COMPOSE_FILE = -f docker-compose-fedora.yml
 APP_CONTAINER = airdrop_app
 DB_CONTAINER = airdrop_db
 
