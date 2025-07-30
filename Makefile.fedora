@@ -1,0 +1,170 @@
+# Makefile.fedora - Helper commands pre Fedora s Podman
+.PHONY: help setup up down restart logs shell db-shell clean backup restore
+
+# Default goal
+.DEFAULT_GOAL := help
+
+# Variables
+COMPOSE_CMD = podman-compose
+COMPOSE_FILE = -f docker-compose.yml
+APP_CONTAINER = airdrop_app
+DB_CONTAINER = airdrop_db
+
+help: ## Zobrazí dostupné príkazy
+	@echo "🐧 Airdrop Portal - Fedora Helper Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+setup: ## Kompletný setup projektu (prvé spustenie)
+	@echo "🚀 Setting up Airdrop Portal on Fedora..."
+	@./setup-fedora.sh || (echo "❌ Setup failed!" && exit 1)
+	@echo "✅ Setup completed!"
+
+up: ## Spustí všetky containers
+	@echo "🔄 Starting containers..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) up -d
+	@echo "✅ Containers started!"
+
+down: ## Zastaví všetky containers
+	@echo "🛑 Stopping containers..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) down
+	@echo "✅ Containers stopped!"
+
+restart: ## Reštartuje všetky containers
+	@echo "🔄 Restarting containers..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) restart
+	@echo "✅ Containers restarted!"
+
+build: ## Rebuild containers
+	@echo "🔨 Building containers..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) up -d --build
+	@echo "✅ Containers built!"
+
+logs: ## Zobrazí logy všetkých services
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) logs -f
+
+logs-app: ## Zobrazí logy iba app container
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) logs -f $(APP_CONTAINER)
+
+logs-db: ## Zobrazí logy iba database container
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) logs -f $(DB_CONTAINER)
+
+status: ## Zobrazí status containers
+	@echo "📊 Container Status:"
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) ps
+
+shell: ## Pripojí sa do app container (bash)
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) bash
+
+shell-root: ## Pripojí sa do app container ako root
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec -u root $(APP_CONTAINER) bash
+
+db-shell: ## Pripojí sa do MySQL databázy
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(DB_CONTAINER) mysql -u airdrop_user -p airdrop_portal
+
+artisan: ## Spustí artisan príkaz (použitie: make artisan CMD="migrate")
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan $(CMD)
+
+migrate: ## Spustí database migrácie
+	@echo "🗃️  Running migrations..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan migrate
+	@echo "✅ Migrations completed!"
+
+migrate-fresh: ## Fresh migrácie + seed (POZOR: vymaže dáta!)
+	@echo "⚠️  Fresh migration (will delete all data!)..."
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan migrate:fresh --seed; \
+		echo "✅ Fresh migration completed!"; \
+	else \
+		echo "❌ Cancelled."; \
+	fi
+
+seed: ## Spustí database seeders
+	@echo "🌱 Seeding database..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan db:seed
+	@echo "✅ Seeding completed!"
+
+cache-clear: ## Vyčistí všetky cache
+	@echo "🧹 Clearing cache..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan cache:clear
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan config:clear
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan route:clear
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan view:clear
+	@echo "✅ Cache cleared!"
+
+cache-build: ## Vybuilduje všetky cache
+	@echo "⚡ Building cache..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan config:cache
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan route:cache
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan view:cache
+	@echo "✅ Cache built!"
+
+backup: ## Vytvorí backup databázy
+	@echo "💾 Creating database backup..."
+	@mkdir -p backups
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(DB_CONTAINER) mysqldump -u airdrop_user -pairdrop_password airdrop_portal > backups/backup_$(shell date +%Y%m%d_%H%M%S).sql
+	@echo "✅ Backup created in backups/ directory"
+
+restore: ## Obnoví databázu z backup súboru (použitie: make restore FILE=backup.sql)
+	@if [ -z "$(FILE)" ]; then \
+		echo "❌ Please specify backup file: make restore FILE=backup.sql"; \
+		exit 1; \
+	fi
+	@echo "🔄 Restoring database from $(FILE)..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec -T $(DB_CONTAINER) mysql -u airdrop_user -pairdrop_password airdrop_portal < $(FILE)
+	@echo "✅ Database restored!"
+
+clean: ## Vyčistí containers, volumes a images (POZOR!)
+	@echo "⚠️  This will remove all containers, volumes and images!"
+	@read -p "Are you sure? [y/N] " -n 1 -r; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		$(COMPOSE_CMD) $(COMPOSE_FILE) down -v; \
+		podman system prune -a -f; \
+		echo "✅ Cleanup completed!"; \
+	else \
+		echo "❌ Cancelled."; \
+	fi
+
+update: ## Aktualizuje projekt z Git a reštartuje
+	@echo "🔄 Updating project..."
+	@git pull origin develop
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) down
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) up -d --build
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan migrate
+	@echo "✅ Project updated!"
+
+test: ## Spustí testy
+	@echo "🧪 Running tests..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) php artisan test
+	@echo "✅ Tests completed!"
+
+install: ## Nainštaluje PHP dependencies
+	@echo "📦 Installing dependencies..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) composer install
+	@echo "✅ Dependencies installed!"
+
+npm-install: ## Nainštaluje NPM dependencies
+	@echo "📦 Installing NPM dependencies..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) npm install
+	@echo "✅ NPM dependencies installed!"
+
+npm-build: ## Builduje frontend assets
+	@echo "🔨 Building frontend assets..."
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) exec $(APP_CONTAINER) npm run build
+	@echo "✅ Frontend assets built!"
+
+health: ## Skontroluje zdravie všetkých services
+	@echo "🏥 Health Check:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@$(COMPOSE_CMD) $(COMPOSE_FILE) ps
+	@echo ""
+	@echo "🌐 Testing endpoints:"
+	@curl -s -o /dev/null -w "Frontend:    %{http_code}\n" http://localhost:8080 || echo "Frontend:    ❌ Down"
+	@curl -s -o /dev/null -w "Admin Panel: %{http_code}\n" http://localhost:8080/admin || echo "Admin Panel: ❌ Down"
+	@curl -s -o /dev/null -w "Mailhog:     %{http_code}\n" http://localhost:8025 || echo "Mailhog:     ❌ Down"
+
+# Quick aliases
+start: up ## Alias pre 'up'
+stop: down ## Alias pre 'down'
+rebuild: build ## Alias pre 'build'

@@ -8,7 +8,7 @@ use App\Models\Project;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-class GenerateSitemap extends Command
+class GenerateSitemapCommand extends Command
 {
     protected $signature = 'sitemap:generate';
     protected $description = 'Generate XML sitemap for the website';

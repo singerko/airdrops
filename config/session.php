@@ -1,4 +1,6 @@
 <?php
+
+use Illuminate\Support\Str;
 // config/session.php
 return [
     'driver' => env('SESSION_DRIVER', 'file'),

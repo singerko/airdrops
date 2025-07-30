@@ -1,0 +1,74 @@
+# docker-compose.fedora.yml
+# Fedora-specific overrides pre optimálny chod s Podman
+
+version: '3.8'
+
+services:
+  app:
+    # Podman-friendly user mapping
+    user: "1000:1000"
+    # SELinux labels
+    security_opt:
+      - label=type:container_runtime_t
+    # Extended timeout pre Fedora
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    # Environment pre debugging
+    environment:
+      - APP_ENV=local
+      - DB_HOST=db
+      - CONTAINER_ENGINE=podman
+
+  db:
+    # MySQL optimalizácie pre Podman
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --bind-address=0.0.0.0
+      --max_connections=100
+      --innodb_buffer_pool_size=256M
+      --wait_timeout=28800
+    # SELinux labels
+    security_opt:
+      - label=type:container_runtime_t
+    # Healthcheck pre databázu
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    # Tmpfs pre better performance
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=100m
+
+  mailhog:
+    # SELinux labels
+    security_opt:
+      - label=type:container_runtime_t
+    # Healthcheck
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Fedora-specific network optimizations
+networks:
+  airdrop_network:
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-airdrop
+      com.docker.network.driver.mtu: 1500
+
+# Volume optimizations for Podman
+volumes:
+  mysql_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${PWD}/docker_volumes/mysql_data

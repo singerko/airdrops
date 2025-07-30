@@ -9,7 +9,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class CleanupExpiredData extends Command
+class CleanupExpiredDataCommand extends Command
 {
     protected $signature = 'cleanup:expired-data';
     protected $description = 'Clean up expired notifications, nonces and cache data';
