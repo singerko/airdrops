@@ -54,4 +54,33 @@ class HomeController extends Controller
             'starting_soon'
         ));
     }
+
+    public function dashboard()
+    {
+        $user = auth()->user();
+        
+        $stats = [
+            'subscriptions' => $user->subscriptions()->count(),
+            'favorites' => $user->favorites()->count(),
+            'notifications' => $user->unreadNotifications()->count(),
+        ];
+
+        $subscribed_airdrops = $user->subscriptions()
+            ->with(['project', 'blockchain'])
+            ->latest('pivot_created_at')
+            ->limit(6)
+            ->get();
+
+        $favorite_airdrops = $user->favorites()
+            ->with(['project', 'blockchain'])
+            ->latest('pivot_created_at')
+            ->limit(6)
+            ->get();
+
+        return view('dashboard', compact(
+            'stats',
+            'subscribed_airdrops',
+            'favorite_airdrops'
+        ));
+    }
 }

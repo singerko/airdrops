@@ -55,11 +55,11 @@ Route::prefix('auth/wallet')->name('wallet.')->group(function () {
 
 // Social Authentication
 Route::prefix('auth')->group(function () {
-    Route::get('/{provider}', [App\Http\Controllers\Auth\SocialController::class, 'redirect'])
+    Route::get('/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToProvider'])
         ->name('social.redirect')
         ->where('provider', 'google|facebook|twitter');
     
-    Route::get('/{provider}/callback', [App\Http\Controllers\Auth\SocialController::class, 'callback'])
+    Route::get('/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'handleProviderCallback'])
         ->name('social.callback')
         ->where('provider', 'google|facebook|twitter');
 });
@@ -79,6 +79,7 @@ Route::middleware('auth')->prefix('profile')->name('profile.')->group(function (
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
     Route::get('/', [AdminDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard.index');
     
     // Airdrops Management
     Route::resource('airdrops', AdminAirdropController::class);
@@ -130,25 +131,7 @@ Route::prefix('api/v1')->middleware('throttle:60,1')->group(function () {
 
 // Pre skupinu routes ktoré vyžadujú prihlásenie
 Route::middleware(['auth', 'force.password.change'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index']);
+    Route::get('/dashboard', [HomeController::class, 'dashboard'])->name('dashboard');
     // ďalšie chránené routes...
 });
 
-// Admin routes
-Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->group(function () {
-    // admin routes...
-});
-
-// Auth routes
-Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
-Route::get('/register', [App\Http\Controllers\Auth\LoginController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [App\Http\Controllers\Auth\LoginController::class, 'register']);
-Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
-
-// Wallet auth routes
-Route::post('/auth/wallet/verify', [App\Http\Controllers\Auth\WalletAuthController::class, 'verify'])->name('wallet.verify');
-
-// Social auth routes  
-Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToProvider'])->name('social.redirect');
-Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'handleProviderCallback'])->name('social.callback');
