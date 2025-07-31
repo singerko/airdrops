@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(SocialLogin::class);
     }
 
+	public function hasRole($role)
+	{
+		return $this->role === $role;
+	}
+
     public function isAdmin()
     {
         return $this->role === 'admin';

@@ -77,14 +77,14 @@
         </div>
 
         <!-- Time Remaining -->
-        @if($airdrop->isActive() && $this->getDaysRemaining())
+        @if($airdrop->isActive() && $component->getDaysRemaining())
             <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mb-4">
                 <div class="flex items-center">
                     <svg class="w-4 h-4 text-orange-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <span class="text-orange-700 dark:text-orange-300 text-sm font-medium">
-                        {{ $this->getDaysRemaining() }} days remaining
+                        {{ $component->getDaysRemaining() }} days remaining
                     </span>
                 </div>
             </div>

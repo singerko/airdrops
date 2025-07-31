@@ -3,11 +3,11 @@
     @if($blockchain->logo)
         <img src="{{ asset('storage/' . $blockchain->logo) }}" 
              alt="{{ $blockchain->name }}" 
-             class="{{ $this->getIconClass() }} rounded">
+             class="{{ $component->getIconClass() }} rounded">
     @else
-        <div class="{{ $this->getIconClass() }} bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
+        <div class="{{ $component->getIconClass() }} bg-primary-100 dark:bg-primary-900 rounded-lg flex items-center justify-center">
             <span class="text-primary-600 dark:text-primary-400 font-semibold text-lg">
-                {{ $this->getIcon() }}
+                {{ $component->getIcon() }}
             </span>
         </div>
     @endif

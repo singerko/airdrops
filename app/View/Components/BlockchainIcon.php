@@ -21,7 +21,7 @@ class BlockchainIcon extends Component
 
     public function render()
     {
-        return view('components.blockchain-icon');
+        return view('components.blockchain-icon')->with('component', $this);
     }
 
     public function getIconClass()

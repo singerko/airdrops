@@ -138,3 +138,17 @@ Route::middleware(['auth', 'force.password.change'])->group(function () {
 Route::middleware(['auth', 'admin', 'force.password.change'])->prefix('admin')->group(function () {
     // admin routes...
 });
+
+// Auth routes
+Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login']);
+Route::get('/register', [App\Http\Controllers\Auth\LoginController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [App\Http\Controllers\Auth\LoginController::class, 'register']);
+Route::post('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout'])->name('logout');
+
+// Wallet auth routes
+Route::post('/auth/wallet/verify', [App\Http\Controllers\Auth\WalletAuthController::class, 'verify'])->name('wallet.verify');
+
+// Social auth routes  
+Route::get('/auth/{provider}', [App\Http\Controllers\Auth\SocialAuthController::class, 'redirectToProvider'])->name('social.redirect');
+Route::get('/auth/{provider}/callback', [App\Http\Controllers\Auth\SocialAuthController::class, 'handleProviderCallback'])->name('social.callback');

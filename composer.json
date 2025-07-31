@@ -7,12 +7,12 @@
     "require": {
         "php": "^8.2",
         "guzzlehttp/guzzle": "^7.2",
+        "intervention/image": "^2.7",
         "laravel/framework": "^10.10",
         "laravel/sanctum": "^3.2",
+        "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.8",
-        "laravel/socialite": "^5.6",
         "laravel/ui": "^4.0",
-        "intervention/image": "^2.7",
         "spatie/laravel-permission": "^5.10"
     },
     "require-dev": {
@@ -25,6 +25,9 @@
         "spatie/laravel-ignition": "^2.0"
     },
     "autoload": {
+		"files": [
+			"app/Helpers/helpers.php"
+		],
         "psr-4": {
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",

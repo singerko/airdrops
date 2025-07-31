@@ -1,5 +1,4 @@
 version: '3.8'
-
 services:
   app:
     build:
@@ -16,10 +15,17 @@ services:
     networks:
       - airdrop_network
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       - APP_ENV=local
       - DB_HOST=db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"] 
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
   db:
     image: mysql:8.0
@@ -36,6 +42,16 @@ services:
       - "3306:3306"
     networks:
       - airdrop_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_password"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --bind-address=0.0.0.0
+      --max_connections=100
 
   mailhog:
     image: mailhog/mailhog
@@ -46,6 +62,11 @@ services:
       - "8025:8025"
     networks:
       - airdrop_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   airdrop_network:
@@ -54,4 +75,3 @@ networks:
 volumes:
   mysql_data:
     driver: local
-

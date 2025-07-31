@@ -18,7 +18,7 @@ class StatusBadge extends Component
 
     public function render()
     {
-        return view('components.status-badge');
+        return view('components.status-badge')->with('component', $this);
     }
 
     public function getBadgeClasses()

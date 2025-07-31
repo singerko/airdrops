@@ -27,7 +27,7 @@ class AirdropCard extends Component
 
     public function render()
     {
-        return view('components.airdrop-card');
+        return view('components.airdrop-card')->with('component', $this);
     }
 
     public function getStatusBadgeClass()
